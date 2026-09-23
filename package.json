@@ -1,0 +1,19 @@
+{
+  "name": "pulseops-serverless",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "services/api"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @pulseops/web",
+    "build": "npm run build -w @pulseops/api && npm run build -w @pulseops/web",
+    "typecheck": "npm run typecheck -w @pulseops/api && npm run typecheck -w @pulseops/web",
+    "test": "npm run test -w @pulseops/api",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
