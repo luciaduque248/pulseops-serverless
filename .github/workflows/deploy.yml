@@ -1,0 +1,62 @@
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: AWS region
+        required: true
+        default: us-east-1
+      stack_name:
+        description: CloudFormation stack name
+        required: true
+        default: pulseops
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup AWS SAM
+        uses: aws-actions/setup-sam@v2
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate project
+        env:
+          VITE_API_URL: https://api.example.com
+          VITE_COGNITO_USER_POOL_ID: us-east-1_example
+          VITE_COGNITO_CLIENT_ID: exampleclientid
+        run: npm run check
+
+      - name: Deploy infrastructure
+        env:
+          AWS_REGION: ${{ inputs.region }}
+          STACK_NAME: ${{ inputs.stack_name }}
+        run: ./scripts/deploy-infra.sh
+
+      - name: Deploy frontend
+        env:
+          AWS_REGION: ${{ inputs.region }}
+          STACK_NAME: ${{ inputs.stack_name }}
+        run: ./scripts/deploy-web.sh
