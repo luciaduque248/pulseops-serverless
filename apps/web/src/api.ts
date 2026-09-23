@@ -8,6 +8,13 @@ export class ApiError extends Error {
   }
 }
 
+interface ErrorPayload {
+  error?: {
+    message?: string;
+    code?: string;
+  };
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const session = await fetchAuthSession();
   const token = session.tokens?.accessToken?.toString();
@@ -22,9 +29,9 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     },
   });
 
-  const payload = await response.json().catch(() => null) as { error?: { message?: string; code?: string } } | T | null;
+  const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const error = payload && 'error' in payload ? payload.error : undefined;
+    const error = (payload as ErrorPayload | null)?.error;
     throw new ApiError(response.status, error?.message ?? 'Request failed', error?.code);
   }
   return payload as T;
