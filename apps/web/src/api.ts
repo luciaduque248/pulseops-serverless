@@ -17,7 +17,9 @@ interface ErrorPayload {
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const session = await fetchAuthSession();
-  const token = session.tokens?.accessToken?.toString();
+  // HTTP API JWT authorizers validate the Cognito User Pool Client audience.
+  // Cognito exposes that audience in the ID token (`aud`), not in the access token.
+  const token = session.tokens?.idToken?.toString();
   if (!token) throw new ApiError(401, 'Your session has expired. Please sign in again.', 'UNAUTHENTICATED');
 
   const response = await fetch(`${appConfig.apiUrl}${path}`, {
